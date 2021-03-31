@@ -1,0 +1,197 @@
+# "Today" is frozen at May 1, 2020 for tests using this file
+
+items:
+  - artifact: NOTIFICATION
+    instance: region-slips
+    updated: '2020-04-01'
+
+
+  # Completed Regions
+
+  - artifact: REGION
+    instance: ABC:v0
+    date: '2020-04-01'
+    name_sortable: ABC
+    version_instance: 0
+
+  - artifact: REGION
+    instance: DEF:v0
+    date: '2020-04-01'
+    airport_code: DEF
+    version_instance: 0
+
+  - artifact: REGION
+    instance: GHI:v0
+    date: '2020-04-04'
+    airport_code: GHI
+    version_instance: 0
+
+
+  # UNcompleted regions (should not contribute to the report)
+
+  - artifact: REGION
+    instance: YYY:v0
+    date: '2020-06-01'
+    name_sortable: YYY'
+    version_instance: 0
+
+  - artifact: REGION
+    instance: ZZZ:v0
+    date: '2020-06-01'
+    version_instance: 0
+
+
+  # Services
+
+  - artifact: SERVICE
+    instance: chrisjen:v0
+    plan: myplan
+    version_instance: 0
+
+  - artifact: SERVICE
+    instance: klaes:v0
+    plan: myplan
+    version_instance: 0
+
+  - artifact: SERVICE
+    instance: sadavir:v0
+    plan: myplan
+    version_instance: 0
+
+
+  # Service without a plan, shouldn't appear anywhere
+
+  - artifact: SERVICE
+    instance: camina:v0
+    version_instance: 0
+
+
+  # Chrisjen in each region
+
+  # slip
+  - artifact: SERVICE
+    instance: chrisjen:v0:ABC
+    belongs_to_artifact: REGION
+    belongs_to_instance: ABC
+    plan: myplan
+    updated: '2020-04-26'
+    date: '2020-04-26'
+    version_instance: 0
+    version_latest: 2
+    updater: john
+
+  - artifact: SERVICE
+    instance: chrisjen:v1:ABC
+    belongs_to_artifact: REGION
+    belongs_to_instance: ABC
+    plan: myplan
+    updated: '2020-04-10'
+    date: '2020-02-01'
+    version_instance: 1
+    version_latest: 2
+    updater: chris
+
+  - artifact: SERVICE
+    instance: chrisjen:v2:ABC
+    belongs_to_artifact: REGION
+    belongs_to_instance: ABC
+    plan: myplan
+    updated: '2020-04-26'
+    date: '2020-04-26'
+    version_instance: 2
+    version_latest: 2
+    updater: john
+
+
+  # improvement
+  - artifact: SERVICE
+    instance: chrisjen:v0:DEF
+    belongs_to_artifact: REGION
+    belongs_to_instance: DEF
+    plan: myplan
+    updated: '2020-04-26'
+    date: '2020-03-10'
+    version_instance: 0
+    version_latest: 6
+    updater: moe
+
+  - artifact: SERVICE
+    instance: chrisjen:v5:DEF
+    belongs_to_artifact: REGION
+    belongs_to_instance: DEF
+    plan: myplan
+    updated: '2020-04-16'
+    date: '2020-04-12'
+    version_instance: 5
+    version_latest: 6
+    updater: sue
+
+  - artifact: SERVICE
+    instance: chrisjen:v6:DEF
+    belongs_to_artifact: REGION
+    belongs_to_instance: DEF
+    plan: myplan
+    updated: '2020-04-23'
+    date: '2020-04-12'
+    version_instance: 6
+    version_latest: 6
+    updater: sue
+
+
+  # Klaes in *some* regions
+
+  - artifact: SERVICE
+    instance: klaes:v0:ABC
+    belongs_to_artifact: REGION
+    belongs_to_instance: ABC
+    plan: myplan
+    updated: '2020-04-26'
+    version_instance: 0
+    version_latest: 7
+    updater: john
+
+  - artifact: SERVICE
+    instance: klaes:v7:ABC
+    belongs_to_artifact: REGION
+    belongs_to_instance: ABC
+    plan: myplan
+    updated: '2020-04-26'
+    version_instance: 7
+    version_latest: 7
+    updater: john
+
+  - artifact: SERVICE
+    instance: klaes:v6:ABC
+    belongs_to_artifact: REGION
+    belongs_to_instance: ABC
+    plan: myplan
+    updated: '2020-04-16'
+    version_instance: 6
+    version_latest: 7
+    updater: john
+
+
+  # sadavir in no regions yet
+
+
+  # camina's service doesn't have a plan, so these should match, but all of camina should be ignored
+
+  - artifact: SERVICE
+    instance: camina:v0:ABC
+    belongs_to_artifact: REGION
+    belongs_to_instance: ABC
+    plan: myplan
+    updated: '2020-04-26'
+    version_instance: 0
+    version_latest: 1
+    updater: john
+
+  - artifact: SERVICE
+    instance: camina:v0:ZZZ
+    belongs_to_artifact: REGION
+    belongs_to_instance: ZZZ
+    plan: myplan
+    updated: '2020-04-26'
+    version_instance: 0
+    version_latest: 1
+    updater: john
