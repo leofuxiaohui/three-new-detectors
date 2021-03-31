@@ -1,0 +1,36 @@
+{
+    "id": "26a27473-f317-4315-86e4-41d3d60445dc",
+    "newEntry": false,
+    "dimension": {
+        "name": "IAD998",
+        "type": "TITAN"
+    },
+    "status": "APPROVED",
+    "registrant": "region-build-automation",
+    "registerDate": 1576125622146,
+    "approver": "region-build-automation",
+    "approvedDate": 1576125622281,
+    "newValue": {
+        "@class": "com.amazon.services.rip.models.Region",
+        "key": {
+            "name": "IAD998",
+            "type": "TITAN"
+        },
+        "accessibilityAttributes": [
+            "SNOWFORTED",
+            "RETAIL",
+            "NO_GLOBAL_CREDS"
+        ]
+    },
+    "previousValue": {
+        "@class": "com.amazon.services.rip.models.Region",
+        "key": {
+            "name": "IAD998",
+            "type": "TITAN"
+        },
+        "accessibilityAttributes": [
+            "SNOWFORTED",
+            "RETAIL"
+        ]
+    }
+}

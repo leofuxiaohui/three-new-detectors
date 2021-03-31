@@ -1,0 +1,625 @@
+lambda_configs:
+
+  - Name: DDBDataIntegrityValidatorFunction
+    FunctionName: DDBDataIntegrityValidator
+    MemorySize: 256
+    ReservedConcurrentExecutions: 5
+    Description: Confirm ddb data conforms to contract
+    Handler: regions_recon_lambda.ddb_data_integrity_validator.validate_ddb_data
+    ScheduleExpression: rate(1 hour)
+    Timeout: 300 # 5 min
+
+    Alarms: # How do we guarentee this is only sev3 for now?
+      - MetricName: Errors
+        Period: 900 # 15 min
+        EvaluationPeriods: 1
+        DatapointsToAlarm: 1
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+
+      - MetricName: Invocations
+        Period: 43200 # 12 hr in seconds
+        EvaluationPeriods: 2
+        DatapointsToAlarm: 2
+        ComparisonOperator: LessThanThreshold
+        Threshold: 1
+        Statistic: Sum
+        TreatMissingData: breaching
+    EnvironmentVariables:
+      - Key: STAGE
+        Value: !Ref Stage
+      - Key: BUILDABLES_TABLE_NAME
+        Value: "buildables"
+
+    # IAM stuff follows
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    RolePolicies:
+      - PolicyName: DDBDataIntegrityValidatorFunctionBuildablesTableAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:GetItem"
+                - "dynamodb:BatchGetItem"
+                - "dynamodb:Query"
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables"
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:Query"
+              Resource:
+                - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables/index/artifact-plan-index"
+      - PolicyName: PutXRayData
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: '*'
+
+  - Name: IngestRipChangesFunction
+    FunctionName: IngestRipChanges
+    Timeout: 60
+    MemorySize: 256
+    ReservedConcurrentExecutions: 100
+    Description: Ingest RIP changes
+    Handler: regions_recon_lambda.ingest_rip_changes.ingest_rip_changes
+    Alarms:
+      - MetricName: Errors
+        Period: 60
+        EvaluationPeriods: 6
+        DatapointsToAlarm: 3
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Throttles
+        Period: 60
+        EvaluationPeriods: 40
+        DatapointsToAlarm: 30
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Invocations
+        Period: 300
+        EvaluationPeriods: 30
+        DatapointsToAlarm: 15
+        ComparisonOperator: LessThanThreshold
+        Threshold: 1
+        Statistic: Sum
+        TreatMissingData: breaching
+    LogGroup: true
+    MetricFilters:
+      - change_not_approved
+      - unknown_dimension_type
+      - service_change
+      - region_change
+      - ignored_change_type
+      - records_processed
+      - lambda_not_invoked_by_sqs_or_tests
+      - integ_or_canary_execution
+      - ddb_items_written
+      - ddb_item_not_found
+      - ddb_item_not_updated
+    EnvironmentVariables:
+      - Key: STAGE
+        Value: !Ref Stage
+      - Key: BUILDABLES_TABLE_NAME
+        Value: "buildables"
+      - Key: RIP_CHANGES_QUEUE_URL
+        Value: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/rip_changes"
+    # Stream processing
+    EventSourceArn: !Sub "arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:rip_changes"
+    BatchSize: 10
+    # IAM stuff follows
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    RolePolicies:
+      - PolicyName: IngestRipChangesFunctionBuildablesTableAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:GetItem"
+                - "dynamodb:BatchGetItem"
+                - "dynamodb:PutItem"
+                - "dynamodb:BatchWriteItem"
+                - "dynamodb:Query"
+                - "dynamodb:DescribeTable"
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables"
+      - PolicyName: IngestRipChangesFunctionRipChangesQueueAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "sqs:GetQueueAttributes"
+                - "sqs:ReceiveMessage"
+                - "sqs:DeleteMessage"
+              Resource: !Sub "arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:rip_changes"
+      - PolicyName: PutXRayData
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: '*'
+      - PolicyName: UseCMKDecryptRipQueue
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - kms:Decrypt
+              Resource: !ImportValue RipChangesQueueCMKArn
+
+  - Name: ServiceUpdateMailerFunction
+    FunctionName: ServiceUpdateMailer
+    MemorySize: 2048  # don't need all this RAM, but want better CPU
+    ReservedConcurrentExecutions: 1
+    Description: Send emails when dates change
+    Handler: regions_recon_lambda.msg_multiplexer_change_mailer.send_updates_mail
+    ScheduleExpression: "cron(*/6 * * * ? *)"
+    Timeout: 900
+    Alarms:
+      - MetricName: Errors
+        Period: 60
+        EvaluationPeriods: 20
+        DatapointsToAlarm: 1
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Throttles
+        Period: 60
+        EvaluationPeriods: 20
+        DatapointsToAlarm: 10
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Invocations
+        Period: 600
+        EvaluationPeriods: 3
+        DatapointsToAlarm: 2
+        ComparisonOperator: LessThanThreshold
+        Threshold: 1
+        Statistic: Sum
+        TreatMissingData: breaching
+    EnvironmentVariables:
+      - Key: STAGE
+        Value: !Ref Stage
+      - Key: MM_STAGE
+        Value: !Ref Stage
+      - Key: TIME_HORIZON
+        Value: "24"
+      - Key: PAST_SYSTEM_EVENT_THRESHOLD
+        Value: "7"
+      - Key: ACCOUNT_ID
+        Value: !Ref AWS::AccountId
+      - Key: BUILDABLES_TABLE_NAME
+        Value: "buildables"
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    RolePolicies:
+      - PolicyName: ServiceUpdateMailerFunctionBuildablesTableAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:Query"
+                - "dynamodb:UpdateItem"
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables"
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:Query"
+              Resource:
+                - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables/index/artifact-plan-index"
+                - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables/index/artifact-updated-index"
+
+      - PolicyName: ServiceUpdateMailerFunctionMsgMultiplexerApiAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "execute-api:Invoke"
+              Resource: !FindInMap [ MsgMultiplexer, ApiArn, !Ref Stage ]
+      - PolicyName: PutXRayData
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: '*'
+
+  - Name: ServiceSlipsMailerFunction
+    FunctionName: ServiceSlipsMailer
+    MemorySize: 2048  # don't need all this RAM, but want better CPU
+    ReservedConcurrentExecutions: 1
+    Description: Send periodic email of slips and non-parity services.
+    Handler: regions_recon_lambda.slips_email.slips_email.send_slips_mail
+    ScheduleExpression: "cron(0 12 ? * MON *)"   # UTC hour notation, so subtract 4 or 5 to get Eastern-time: going for late morning here
+    Timeout: 900
+    Alarms:
+      - MetricName: Errors
+        Period: 60
+        EvaluationPeriods: 20
+        DatapointsToAlarm: 1
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Throttles
+        Period: 60
+        EvaluationPeriods: 20
+        DatapointsToAlarm: 10
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+    EnvironmentVariables:
+      - Key: MM_STAGE
+        Value: !Ref Stage
+      - Key: ACCOUNT_ID
+        Value: !Ref AWS::AccountId
+      - Key: NOTIFICATION_INSTANCE
+        Value: "region-slips"
+      - Key: SLIP_DELTA
+        Value: "30"
+      - Key: BUILDABLES_TABLE_NAME
+        Value: "buildables"
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    RolePolicies:
+      - PolicyName: ServiceSlipsMailerFunctionBuildablesTableAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:Query"
+                - "dynamodb:GetItem"
+                - "dynamodb:UpdateItem"
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables"
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:Query"
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables/index/artifact-plan-index"
+      - PolicyName: ServiceSlipsMailerFunctionMsgMultiplexerApiAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "execute-api:Invoke"
+              Resource: !FindInMap [ MsgMultiplexer, ApiArn, !Ref Stage ]
+      - PolicyName: PutXRayData
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: '*'
+
+  - Name: RMSDatesScheduledJob
+    FunctionName: RMSDatesScheduledJobFunction
+    MemorySize: 2048
+    ReservedConcurrentExecutions: 1
+    Description: Pulls RMS Analytics API to sync calculated date values for SinR objects in the buildables table
+    Handler: regions_recon_lambda.rms_dates_ingestor.event_handler.update_rms_projected_ga_dates
+    ScheduleExpression: "cron(0 0/6 * * ? *)" # every 6 hours, aka 4 times a day
+    Timeout: 900
+    Alarms:
+      - MetricName: Errors
+        Period: 60
+        EvaluationPeriods: 6
+        DatapointsToAlarm: 1
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Throttles
+        Period: 60
+        EvaluationPeriods: 40
+        DatapointsToAlarm: 30
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Invocations
+        Period: 21600
+        EvaluationPeriods: 1
+        DatapointsToAlarm: 1
+        ComparisonOperator: LessThanThreshold
+        Threshold: 1
+        Statistic: Sum
+        TreatMissingData: breaching
+
+    LogGroup: true
+    MetricFilters:
+      - ddb_item_already_uptodate
+      - ddb_updated_item
+      - no_ga_milestone_found
+      - rms_response_invalid
+    EnvironmentVariables:
+      - Key: STAGE
+        Value: !Ref Stage
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+    RolePolicies:
+      - PolicyName: RMSDatesScheduledJobFunctionBuildablesTableAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:GetItem"
+                - "dynamodb:BatchGetItem"
+                - "dynamodb:PutItem"
+                - "dynamodb:UpdateItem"
+                - "dynamodb:BatchWriteItem"
+                - "dynamodb:Query"
+                - "dynamodb:DescribeTable"
+              Resource:
+                - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables"
+                - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables/index/artifact-plan-index"
+
+      - PolicyName: RMSDatesScheduledJobFunctionRMSAPIAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "execute-api:Invoke"
+              Resource:
+                - !Sub "arn:aws:execute-api:us-east-1:345019763633:b8anr99dn7/prod/GET/dates"
+                # allowlist yourself here: https://code.amazon.com/packages/RmsAnalyticsApiLambda/blobs/mainline/--/configuration/cloudFormation/api_gateway_auth.template.yml
+      - PolicyName: PutXRayData
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: '*'
+
+  - Name: DeliveryDateMailerFunction
+    FunctionName: DeliveryDateMailer
+    MemorySize: 2048  # don't need all this RAM, but want better CPU
+    ReservedConcurrentExecutions: 1
+    Description: Check three times a day for service teams that need to be notified on upcoming or passed launch dates then mail them
+    Handler: regions_recon_lambda.launch_date_mailer.notification_mailer
+    ScheduleExpression: "cron(0 18 * * ? *)" # Every day at 10 AM PST (6 PM UTC)
+    Timeout: 900
+    Alarms:
+      - MetricName: Errors
+        Period: 3600
+        EvaluationPeriods: 1
+        DatapointsToAlarm: 1
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 2   # Daily script that checks/reattempts 3 times a day. >2 means a day of failure
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Throttles
+        Period: 28800
+        EvaluationPeriods: 3
+        DatapointsToAlarm: 3
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+    EnvironmentVariables:
+      - Key: MM_STAGE
+        Value: !Ref Stage
+      - Key: ACCOUNT_ID
+        Value: !Ref AWS::AccountId
+      - Key: BUILDABLES_TABLE_NAME
+        Value: "buildables"
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    RolePolicies:
+      - PolicyName: DeliveryDateMailerFunctionBuildablesTableAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:Query"
+                - "dynamodb:UpdateItem"
+                - "dynamodb:GetItem"
+                - "dynamodb:DescribeTable"
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables"
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:Query"
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables/index/artifact-plan-index"
+      - PolicyName: DeliveryDateMailerFunctionMsgMultiplexerApiAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "execute-api:Invoke"
+              Resource: !FindInMap [ MsgMultiplexer, ApiArn, !Ref Stage ]
+      - PolicyName: PutXRayData
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: '*'
+
+  - Name: BlueprintIngestorFunction
+    FunctionName: BlueprintIngestor
+    MemorySize: 2048  # don't need all this RAM, but want better CPU
+    Description: Ingest blueprint data
+    Handler: regions_recon_lambda.blueprint_ingestor.blueprint_ingestor_event_handler.ingest_blueprint
+    ScheduleExpression: rate(5 minutes)
+    Timeout: 285 # Avoids overlapping executions given invocation is every 300 seconds
+    ReservedConcurrentExecutions: 1
+    EventInvokeConfig:
+      MaximumRetryAttempts: 0
+    Alarms:
+      - MetricName: Errors
+        Period: 300
+        EvaluationPeriods: 12
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Throttles
+        Period: 300
+        DatapointsToAlarm: 4
+        EvaluationPeriods: 6
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 0
+        Statistic: Sum
+        TreatMissingData: notBreaching
+      - MetricName: Invocations
+        Period: 300
+        EvaluationPeriods: 12
+        ComparisonOperator: LessThanThreshold
+        Threshold: 1
+        Statistic: Sum
+        TreatMissingData: breaching
+    LogGroup: true
+    MetricFilters:
+      - ValidBlueprintDataItemsCount
+      - ApiViolationBlueprintDataItemsCount
+      - InvalidBlueprintDataItemsCount
+      - IgnoredBlueprintDataItemsCount
+    EnvironmentVariables:
+      - Key: BLUEPRINT_ARN
+        Value: !Ref BlueprintArn
+      - Key: VALID_ITEMS_METRIC_LABEL
+        Value: ValidBlueprintDataItemsCount
+      - Key: API_VIOLATION_METRIC_LABEL
+        Value: ApiViolationBlueprintDataItemsCount
+      - Key: INVALID_ITEMS_METRIC_LABEL
+        Value: InvalidBlueprintDataItemsCount
+      - Key: IGNORED_ITEMS_METRIC_LABEL
+        Value: IgnoredBlueprintDataItemsCount
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    RolePolicies:
+      - PolicyName: BlueprintIngestorFunctionBuildablesTableAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:Query"
+                - "dynamodb:UpdateItem"
+                - "dynamodb:GetItem"
+                - "dynamodb:PutItem"
+                - "dynamodb:DeleteItem"
+                - "dynamodb:BatchWriteItem"
+                - "dynamodb:BatchGetItem"
+                - "dynamodb:DescribeTable"
+              Resource:
+                - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables"
+                - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables/index/artifact-plan-index"
+      - PolicyName: BlueprintIngestorFunctionIAMRole
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "sts:AssumeRole"
+              Resource: !Ref BlueprintArn
+      - PolicyName: PutXRayData
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: '*'
+
+  - Name: ReaperFunction
+    FunctionName: Reaper
+    MemorySize: 2048
+    Description: Deletes unused buildables data
+    Handler: regions_recon_lambda.reaper.reaper_handler.reap
+    ScheduleExpression: "cron(0 18 ? * 3 *)" # Tuesday 6 PM UTC
+    Timeout: 900
+    ReservedConcurrentExecutions: 1
+    Alarms:
+      - MetricName: Errors
+        Period: 1200
+        EvaluationPeriods: 1
+        ComparisonOperator: GreaterThanThreshold
+        Threshold: 1
+        Statistic: Sum
+        TreatMissingData: notBreaching
+    LogGroup: true
+    MetricFilters:
+      - DeletedItemsCount
+    EnvironmentVariables:
+      - Key: DELETED_ITEMS_METRIC_LABEL
+        Value: DeletedItemsCount
+      - Key: STAGE
+        Value: !Ref Stage
+    ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    RolePolicies:
+      - PolicyName: ReaperFunctionBuildablesTableAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "dynamodb:Query"
+                - "dynamodb:DeleteItem"
+                - "dynamodb:BatchWriteItem"
+                - "dynamodb:BatchGetItem"
+                - "dynamodb:DescribeTable"
+              Resource:
+                - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/buildables"
+      - PolicyName: PutXRayData
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: '*'
+
+  - Name: InternalServiceCategorizerFunction
+    FunctionName: InternalServiceCategorizer
+    Condition: IsNotGammaNorProd
+    MemorySize: 2048
+    Description: Adds a categorization of Launch Blocking, Mandatory, or NGE based on critical path/dependencies.
+    Handler: regions_recon_lambda.internal_service_categorizer.categorizer_handler.categorize_internal
+    ScheduleExpression: "cron(00 15 * * ? *)" # 11 am ET
+    Timeout: 900
+    RolePolicies:
+      - PolicyName: InternalServiceCategorizerFunctionRMSApiAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: 'Allow'
+              Action:
+                - "execute-api:Invoke"
+              Resource: '*'

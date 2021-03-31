@@ -1,0 +1,49 @@
+{
+    "id": "cec17ec8-5576-43ac-b697-b0731a16327a",
+    "newEntry": false,
+    "dimension": {
+        "name": "rms-events-test",
+        "type": "SERVICE"
+    },
+    "status": "APPROVED",
+    "registrant": "RMSEventsTest",
+    "registerDate": 1572884717678,
+    "approver": "RMSEventsTest",
+    "approvedDate": 1572884717768,
+    "parentDimension": {
+        "name": "kat_rms_events_canary_cell",
+        "type": "CELL"
+    },
+    "newValue": {
+        "@class": "com.amazon.services.rip.models.ServiceInstance",
+        "parentDimensionKey": {
+            "name": "kat_rms_events_canary_cell",
+            "type": "CELL"
+        },
+        "dimensionMetadata": {
+            "@class": "com.amazon.services.rip.models.ServiceMetadata",
+            "key": {
+                "name": "rms-events-test",
+                "type": "SERVICE"
+            }
+        },
+        "status": "NOT_PLANNED"
+    },
+    "previousValue": {
+        "@class": "com.amazon.services.rip.models.ServiceInstance",
+        "parentDimensionKey": {
+            "name": "kat_rms_events_canary_cell",
+            "type": "CELL"
+        },
+        "dimensionMetadata": {
+            "@class": "com.amazon.services.rip.models.ServiceMetadata",
+            "key": {
+                "name": "rms-events-test",
+                "type": "SERVICE"
+            }
+        },
+        "status": "PLANNED"
+    },
+    "serviceName": "rms-events-test",
+    "serviceStatus": "NOT_PLANNED"
+}

@@ -1,0 +1,8 @@
+Mappings:
+  MsgMultiplexer:
+    ApiArn:
+      dev: arn:aws:execute-api:us-east-1:735874811833:*
+      beta: arn:aws:execute-api:us-east-1:735874811833:*
+      gamma: arn:aws:execute-api:us-east-1:892696402665:*
+      prod: arn:aws:execute-api:us-east-1:382044592405:*
+

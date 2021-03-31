@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Python Lambdas (non-API)
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  UseBatsKeyParam: {Type: 'String', Default: 'false', AllowedValues:['true','false']}
+  # "beta", "prod", etc.  Use your login name if in your dev account, since this is used in
+  # the created S3 bucket name (which have global scope).
+  Stage:
+    Type: String
+  Region:
+    Type: String
+    Default: us-east-1
+  DeploymentBucketImportName:
+    Type: String
+    Default: "DeploymentBucket"
+    Description: "This parameter is meant to be passed by LPT (and piplines). It holds the name of import that points to the bucket that holds your artifacts. You should use this as the import (Fn::ImportValue: {Ref: DeploymentBucket}) for getting any BATS related artifacts."
+  BlueprintArn:
+    Type: String
+    Default: arn:aws:iam::234173656439:role/RegionServiceWorkbookAccessRole
+    Description: "The arn for the role to access blueprint from RECON"
+
+Conditions:
+  UseBatsKey:
+    !Equals [ !Ref UseBatsKeyParam, true ]
+  IsNotGammaNorProd:
+    !Not [!Or [!Equals [!Ref Stage, "gamma"], !Equals [!Ref Stage, "prod"]]]
+  IsProdStage:
+    Fn::Equals:
+    - Ref: Stage
+    - 'prod'
+
+Resources:
+{% include 'lambda.template.yaml.jinja' %}

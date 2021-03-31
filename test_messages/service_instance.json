@@ -1,0 +1,49 @@
+{
+    "id": "a3fd42f4-8031-4bf1-ae16-f617eb08800d",
+    "newEntry": false,
+    "dimension": {
+        "name": "rms-canary-service",
+        "type": "SERVICE"
+    },
+    "status": "APPROVED",
+    "registrant": "rms-canary",
+    "registerDate": 1572884668174,
+    "approver": "rms-canary",
+    "approvedDate": 1572884668286,
+    "parentDimension": {
+        "name": "ARN",
+        "type": "REGION"
+    },
+    "newValue": {
+        "@class": "com.amazon.services.rip.models.ServiceInstance",
+        "parentDimensionKey": {
+            "name": "ARN",
+            "type": "REGION"
+        },
+        "dimensionMetadata": {
+            "@class": "com.amazon.services.rip.models.ServiceMetadata",
+            "key": {
+                "name": "rms-canary-service",
+                "type": "SERVICE"
+            }
+        },
+        "status": "BUILD"
+    },
+    "previousValue": {
+        "@class": "com.amazon.services.rip.models.ServiceInstance",
+        "parentDimensionKey": {
+            "name": "ARN",
+            "type": "REGION"
+        },
+        "dimensionMetadata": {
+            "@class": "com.amazon.services.rip.models.ServiceMetadata",
+            "key": {
+                "name": "rms-canary-service",
+                "type": "SERVICE"
+            }
+        },
+        "status": "PLANNED"
+    },
+    "serviceName": "rms-canary-service",
+    "serviceStatus": "BUILD"
+}

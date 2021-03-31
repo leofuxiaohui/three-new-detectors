@@ -1,0 +1,39 @@
+{
+    "id": "e3813be7-a340-4519-b074-93f9895ce3bd",
+    "newEntry": true,
+    "dimension": {
+        "name": "recon-integ-2",
+        "type": "SERVICE"
+    },
+    "status": "APPROVED",
+    "registrant": "addilks",
+    "registerDate": 1610117911738,
+    "approver": "addilks",
+    "approvedDate": 1610117911763,
+    "newValue": {
+        "@class": "com.amazon.services.rip.models.ServiceMetadata",
+        "key": {
+            "name": "recon-integ-2",
+            "type": "SERVICE"
+        },
+        "description": "Testing rip ingestion logic",
+        "longName": "Another top level Recon Integ Service",
+        "possibleStatuses": [
+            "PLANNED",
+            "BUILD",
+            "IA",
+            "GA"
+        ],
+        "availabilityLevel": [
+            "REGIONAL"
+        ],
+        "visibility": "INTERNAL",
+        "cti": {
+            "default": {
+                "category": "AWS",
+                "type": "Region Build Team",
+                "item": "RBA Development"
+            }
+        }
+    }
+}

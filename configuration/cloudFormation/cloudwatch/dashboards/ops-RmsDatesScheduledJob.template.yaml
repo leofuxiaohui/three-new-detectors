@@ -1,0 +1,42 @@
+---
+Resources:
+  RmsDatesScheduledJobOpsDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: "ops-RmsDatesScheduledJob"
+      DashboardBody:
+        Fn::Sub: >
+          {
+            "start": "-P14D",
+            "widgets": [
+                {
+                    "type": "metric",
+                    "x": 0,
+                    "y": 0,
+                    "width": 12,
+                    "height": 6,
+                    "properties": {
+                        "metrics": [
+                            [ { "expression": "SUM([diau1, diau2])", "label": "ddb_item_already_uptodate", "id": "diau" } ],
+                            [ { "expression": "SUM([dui1, dui2])", "label": "ddb_updated_item", "id": "dui" } ],
+                            [ { "expression": "SUM([ngmf1, ngmf2])", "label": "no_ga_milestone_found", "id": "ngmf" } ],
+                            [ { "expression": "SUM([rri1, rri2])", "label": "rms_response_invalid", "id": "rri" } ],
+                            [ "Recon", "ddb_item_already_uptodate", "ServiceName", "pull_and_write_rms_dates", {"id": "diau1", "visible": false} ],
+                            [ ".", "ddb_updated_item", ".", ".", {"id": "dui1", "visible": false} ],
+                            [ ".", "no_ga_milestone_found", ".", ".", {"id": "ngmf1", "visible": false} ],
+                            [ ".", "rms_response_invalid", ".", ".", {"id": "rri1", "visible": false} ],
+                            [ "Recon/RMSDatesScheduledJobFunction", "ddb_item_already_uptodate", { "id": "diau2", "visible": false } ],
+                            [ ".", "ddb_updated_item", { "id": "dui2", "visible": false }],
+                            [ ".", "no_ga_milestone_found", { "id": "ngmf2", "visible": false }],
+                            [ ".", "rms_response_invalid", { "id": "rri2", "visible": false }]
+                        ],
+                        "view": "timeSeries",
+                        "stacked": false,
+                        "title": "RMS Date Changes",
+                        "region": "us-east-1",
+                        "stat": "Sum",
+                        "period": 21600
+                    }
+                }
+            ]
+          }

@@ -1,0 +1,49 @@
+{
+    "id": "80936c1e-1eb7-4c0a-982a-2a371fe0bea0",
+    "newEntry": false,
+    "dimension": {
+        "name": "rms-events-test/sm-change-test",
+        "type": "SERVICE"
+    },
+    "status": "APPROVED",
+    "registrant": "RMSEventsTest",
+    "registerDate": 1573482353008,
+    "approver": "RMSEventsTest",
+    "approvedDate": 1573482353096,
+    "parentDimension": {
+        "name": "kat_rms_events_canary_cell",
+        "type": "CELL"
+    },
+    "newValue": {
+        "@class": "com.amazon.services.rip.models.ServiceInstance",
+        "parentDimensionKey": {
+            "name": "kat_rms_events_canary_cell",
+            "type": "CELL"
+        },
+        "dimensionMetadata": {
+            "@class": "com.amazon.services.rip.models.ServiceMetadata",
+            "key": {
+                "name": "rms-events-test/sm-change-test",
+                "type": "SERVICE"
+            }
+        },
+        "status": "IA"
+    },
+    "previousValue": {
+        "@class": "com.amazon.services.rip.models.ServiceInstance",
+        "parentDimensionKey": {
+            "name": "kat_rms_events_canary_cell",
+            "type": "CELL"
+        },
+        "dimensionMetadata": {
+            "@class": "com.amazon.services.rip.models.ServiceMetadata",
+            "key": {
+                "name": "rms-events-test/sm-change-test",
+                "type": "SERVICE"
+            }
+        },
+        "status": "NOT_PLANNED"
+    },
+    "serviceName": "rms-events-test/sm-change-test",
+    "serviceStatus": "IA"
+}

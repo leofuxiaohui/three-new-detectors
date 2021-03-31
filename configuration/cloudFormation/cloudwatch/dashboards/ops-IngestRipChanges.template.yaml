@@ -1,0 +1,114 @@
+---
+Resources:
+  IngestRipChangesOpsDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: "ops-IngestRipChanges"
+      DashboardBody:
+        Fn::Sub: >
+          {
+              "start": "-P2W",
+              "widgets": [
+                  {
+                      "type": "metric",
+                      "x": 0,
+                      "y": 0,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ { "expression": "SUM([cna1, cna2])", "label": "Change Not Approved (yet)", "id": "cna" } ],
+                              [ "Recon/IngestRipChanges", "change_not_approved", { "id": "cna1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Change Not Approved (yet)", "id": "cna2", "visible": false } ],
+                              [ { "expression": "SUM([udt1, udt2])", "label": "Change (Unknown dimension type - no Recon actions taken)", "id": "udt" } ],
+                              [ "Recon/IngestRipChanges", "unknown_dimension_type", { "id": "udt1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Change (Unknown dimension type - no Recon actions taken)", "id": "udt2", "visible": false } ],
+                              [ { "expression": "SUM([sc1, sc2])", "label": "Change (Service)", "id": "sc" } ],
+                              [ "Recon/IngestRipChanges", "service_change", { "id": "sc1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Change (Service)", "id": "sc2", "visible": false } ],
+                              [ { "expression": "SUM([rc1, rc2])", "label": "Change (Region)", "id": "rc" } ],
+                              [ "Recon/IngestRipChanges", "region_change", { "id": "rc1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Change (Region)", "id": "rc2", "visible": false } ],
+                              [ { "expression": "SUM([ict1, ict2])", "label": "Ignored Change Type (Features, ...)", "id": "ict" } ],
+                              [ "Recon/IngestRipChanges", "ignored_change_type", { "id": "ict1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Ignored Change Type (Features, ...)", "id": "ict2", "visible": false } ],
+                              [ { "expression": "SUM([rp1, rp2])", "label": "Total Change Records (Incoming From RIP", "id": "rp" } ],
+                              [ "Recon/IngestRipChanges", "records_processed", { "id": "rp1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Total Change Records (Incoming From RIP", "id": "rp2", "visible": false } ],
+                              [ { "expression": "SUM([lnibsot1, lnibsot2])", "label": "Lambda incorrectly invoked (should be 0)", "id": "lnibsot" } ],
+                              [ "Recon/IngestRipChanges", "lambda_not_invoked_by_sqs_or_tests", { "id": "lnibsot1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Lambda incorrectly invoked (should be 0)", "id": "lnibsot2", "visible": false } ],
+                              [ { "expression": "SUM([ioce1, ioce2])", "label": "Integ test or canary executions", "id": "ioce" } ],
+                              [ "Recon/IngestRipChanges", "integ_or_canary_execution", { "id": "ioce1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Integ test or canary executions", "id": "ioce2", "visible": false } ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "stat": "Sum",
+                          "period": 300,
+                          "title": "RIP Changes",
+                          "yAxis": {
+                              "left": {
+                                  "min": 0
+                              }
+                          }
+                      }
+                  },
+                  {
+                      "type": "metric",
+                      "x": 12,
+                      "y": 0,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ { "expression": "SUM([diw1, diw2])", "label": "Total Items Written", "id": "diw" } ],
+                              [ "Recon/IngestRipChanges", "ddb_items_written", { "id": "diw1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Total Items Written", "id": "diw2", "visible": false } ],
+                              [ { "expression": "SUM([dinf1, dinf2])", "label": "NEW Items Written (v0 didn't exist previously)", "id": "dinf" } ],
+                              [ "Recon/IngestRipChanges", "ddb_item_not_found", { "id": "dinf1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "NEW Items Written (v0 didn't exist previously)", "id": "dinf2", "visible": false } ],
+                              [ { "expression": "SUM([dinu1, dinu2])", "label": "Items Not Needing Update", "id": "dinu" } ],
+                              [ "Recon/IngestRipChanges", "ddb_item_not_updated", { "id": "dinu1", "visible": false } ],
+                              [ "Recon", ".", "ServiceName", "IngestRipChanges", { "label": "Items Not Needing Update", "id": "dinu2", "visible": false } ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "period": 300,
+                          "stat": "Sum",
+                          "yAxis": {
+                              "left": {
+                                  "min": 0
+                              }
+                          },
+                          "title": "DDB Table Activity"
+                      }
+                  },
+                  {
+                      "type": "metric",
+                      "x": 0,
+                      "y": 6,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ "AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", "rip_changes" ],
+                              [ "...", "rip_changes_dlq" ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "title": "SQS Messages",
+                          "stat": "Maximum",
+                          "period": 300,
+                          "yAxis": {
+                              "left": {
+                                  "min": 0
+                              }
+                          }
+                      }
+                  }
+              ]
+          }

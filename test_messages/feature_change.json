@@ -1,0 +1,37 @@
+{
+    "id": "254a38ad-4af4-4ba4-a303-179c4a1584e7",
+    "newEntry": false,
+    "dimension": {
+        "name": "bigmac",
+        "type": "SERVICE"
+    },
+    "status": "APPROVED",
+    "registrant": "oliosval",
+    "registerDate": 1578506698895,
+    "approver": "oliosval",
+    "approvedDate": 1578506699151,
+    "newValue": {
+        "dimension": {
+            "name": "bigmac",
+            "type": "SERVICE"
+        },
+        "parentDimensionKey": {
+            "name": "osu",
+            "type": "REGION"
+        },
+        "id": "efs-partition",
+        "status": "GA"
+    },
+    "previousValue": {
+        "dimension": {
+            "name": "bigmac",
+            "type": "SERVICE"
+        },
+        "parentDimensionKey": {
+            "name": "osu",
+            "type": "REGION"
+        },
+        "id": "efs-partition",
+        "status": "BUILD"
+    }
+}

@@ -1,0 +1,54 @@
+Parameters:
+  HydraTestResultsRoleImportName:
+    Type: String
+    Default: HydraTestResultsRole
+Conditions:
+  HasCanary:
+    Fn::And:
+      - Condition: HasHydra
+      - Fn::Not:
+        - Condition: UseBatsKey
+Resources:
+  HydraTestResultsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: {Fn::Sub: "${Stage}-RRPL-${HydraTestResultsRoleImportName}"}
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: ["sts:AssumeRole"]
+            Effect: Allow
+            Principal:
+              Service: [lambda.amazonaws.com]
+        Version: "2012-10-17"
+      Policies:
+        - PolicyName: HydraTestResultsRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                - "logs:CreateLogGroup"
+                - "logs:CreateLogStream"
+                - "logs:PutLogEvents"
+                Effect: Allow
+                Resource: "*"
+              - Action:
+                - "dynamodb:BatchGetItem"
+                - "dynamodb:GetItem"
+                - "dynamodb:Query"
+                - "dynamodb:Scan"
+                Effect: Allow
+                Resource:
+                  - {Fn::Sub: "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/CODETEST_TestRunData_DO-NOT-DELETE"}
+                  - {Fn::Sub: "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/CODETEST_TestRunData_DO-NOT-DELETE/index/*"}
+
+  HydraCanaryPersistentConfiguration:
+    Condition: HasCanary
+    Type: AWS::CodeTest::PersistentConfiguration
+    Properties:
+      ResultsRoleArn:
+        Fn::ImportValue:
+          Ref: HydraTestResultsRoleImportName
+Outputs:
+  HydraCanaryPersistentConfigurationId:
+    Condition: HasCanary
+    Value: !Ref HydraCanaryPersistentConfiguration

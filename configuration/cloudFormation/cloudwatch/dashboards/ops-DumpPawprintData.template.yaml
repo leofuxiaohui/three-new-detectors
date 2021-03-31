@@ -1,0 +1,190 @@
+---
+Resources:
+  DumpPawprintDataOpsDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: "ops-DumpPawprintData"
+      DashboardBody:
+        Fn::Sub: >
+          {
+              "start": "-P2W",
+              "widgets": [
+                  {
+                      "type": "metric",
+                      "x": 0,
+                      "y": 0,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ "Recon", "ddb_updated_item", "ServiceName", "DumpPawprintData" ],
+                              [ ".", "ddb_updated_item_region", ".", "." ],
+                              [ ".", "ddb_item_not_found", ".", "." ],
+                              [ ".", "ddb_updated_item_service", ".", "." ],
+                              [ ".", "ddb_updated_item_serviceinstance", ".", "." ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "yAxis": {
+                              "left": {
+                                  "min": 0,
+                                  "label": "Items"
+                              }
+                          },
+                          "stat": "Average",
+                          "period": 86400,
+                          "title": "Items Updated (added/modified blueprints)"
+                      }
+                  },
+                  {
+                      "type": "metric",
+                      "x": 12,
+                      "y": 0,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ "Recon", "blueprints_processed", "ServiceName", "DumpPawprintData" ],
+                              [ ".", "blueprints_without_associated_rip_service", ".", "." ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "yAxis": {
+                              "left": {
+                                  "min": 0,
+                                  "label": "Blueprints",
+                                  "showUnits": false
+                              }
+                          },
+                          "stat": "Average",
+                          "period": 86400,
+                          "title": "Blueprints Processed"
+                      }
+                  },
+                  {
+                      "type": "metric",
+                      "x": 0,
+                      "y": 6,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ "Recon", "rms_list_dimensions_latency", "ServiceName", "DumpPawprintData" ],
+                              [ ".", "rms_list_services_latency", ".", "." ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "yAxis": {
+                              "left": {
+                                  "label": "ms",
+                                  "min": 0
+                              }
+                          },
+                          "stat": "p90",
+                          "period": 86400,
+                          "title": "RMS Latency"
+                      }
+                  },
+                  {
+                      "type": "metric",
+                      "x": 12,
+                      "y": 6,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ "AWS/Lambda", "Errors", "FunctionName", "DumpPawprintData" ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "title": "Lambda Errors",
+                          "period": 86400,
+                          "stat": "Average"
+                      }
+                  },
+                  {
+                      "type": "metric",
+                      "x": 0,
+                      "y": 12,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ "AWS/Lambda", "Duration", "FunctionName", "DumpPawprintData" ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "period": 86400,
+                          "stat": "Average"
+                      }
+                  },
+                  {
+                      "type": "metric",
+                      "x": 12,
+                      "y": 12,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ "Recon", "rms_services", "ServiceName", "DumpPawprintData" ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "stat": "Average",
+                          "period": 86400,
+                          "title": "RMS Services"
+                      }
+                  },
+                  {
+                      "type": "metric",
+                      "x": 0,
+                      "y": 18,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ "Recon", "rms_regions", "ServiceName", "DumpPawprintData", { "yAxis": "left" } ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "stat": "Average",
+                          "period": 86400,
+                          "title": "RMS Regions"
+                      }
+                  },
+                  {
+                      "type": "metric",
+                      "x": 12,
+                      "y": 18,
+                      "width": 12,
+                      "height": 6,
+                      "properties": {
+                          "metrics": [
+                              [ "Recon", "blueprints_age_ec2fh", "ServiceName", "DumpPawprintData" ],
+                              [ ".", "blueprints_age_ec2native", ".", "." ],
+                              [ ".", "blueprints_age_hailstone", ".", "." ],
+                              [ ".", "blueprints_age_legacy", ".", "." ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "region": "us-east-1",
+                          "title": "Pawprint Data Age (0 means \"today\", 1 means \"yesterday\", ...)",
+                          "yAxis": {
+                              "left": {
+                                  "min": 0,
+                                  "label": "Days old"
+                              }
+                          },
+                          "period": 86400,
+                          "stat": "p10"
+                      }
+                  }
+              ]
+          }

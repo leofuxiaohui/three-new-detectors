@@ -1,0 +1,139 @@
+<div style="font: 11pt Calbri, sans-serif;">
+    <div style="text-align:center;margin:14pt 0; font: bold red 13.5pt, Calbri, sans-serif;" align="center">
+        <font color="red">AMAZON CONFIDENTIAL</font>
+    </div>
+    <div style="text-align:center;margin-top:14pt;margin-bottom:14pt;" align="center">
+        <font color="red">All dates are for internal planning only. Do not share dates with customers.</font>
+    </div>
+
+    <h2>Service Slips: {{beginning}} to {{end}}</h2>
+
+    <h3>Major Slips ({{slip_count}})</h3>
+
+    <p style="font: small-caption">
+        Major slips are defined as single date changes of {{slip_delta}} days or more. All times are UTC.
+    </p>
+
+    {{#slips_exist}}
+        {{#slips}}
+            <p style="font: 10.5pt Calbri, sans-serif;">
+                On {{updated}} <a href="https://phonetool.amazon.com/users/{{updater}}">{{updater}}</a>
+                changed the delivery date of
+                <a href="https://web.recon.region-services.aws.a2z.com/services/{{name_rip}}">{{name_pretty}}</a>
+                in <a href="https://web.recon.region-services.aws.a2z.com/regions/{{region}}/{{name_rip}}">{{region}}</a>
+                from {{previous}} to {{current}}, a change of {{change}} days, with the following note:
+                "{{note}}"
+            </p>
+        {{/slips}}
+    {{/slips_exist}}
+
+    {{^slips_exist}}
+        <p>No new slips since last report.</p>
+    {{/slips_exist}}
+
+    <h3>Major Improvements ({{improvement_count}})</h3>
+
+    <p style="font: small-caption">
+        Major improvements are defined as single date changes of {{slip_delta}} days or more.
+        All times are UTC.
+    </p>
+
+    {{#improvements_exist}}
+        {{#improvements}}
+            <p style="font: 10.5pt Calbri, sans-serif;">
+                On {{updated}} <a href="https://phonetool.amazon.com/users/{{updater}}">{{updater}}</a>
+                changed the delivery date of
+                <a href="https://web.recon.region-services.aws.a2z.com/services/{{name_rip}}">{{name_pretty}}</a>
+                in
+                <a href="https://web.recon.region-services.aws.a2z.com/regions/{{region}}/{{name_rip}}">{{region}}</a>
+                from {{previous}} to {{current}}, an improvement of {{change}} days, with the following note:
+                "{{note}}"
+            </p>
+        {{/improvements}}
+    {{/improvements_exist}}
+
+    {{^improvements_exist}}
+        <p>No new improvements since last report.</p>
+    {{/improvements_exist}}
+
+
+    <h3>Services With Unplanned Regions ({{unplanned_count}})</h3>
+
+    <table style="font: 11pt Calbri, sans-serif; border: 1px solid #ccc; border-collapse: collapse; width: 100%">
+        <tbody>
+            <tr>
+                <th style="padding:0.75pt;border:1pt solid #CCCCCC; width: 19em">
+                    <div style="text-align:center;margin:0" align="center">
+                        <b>Service</b>
+                    </div>
+                </th>
+                <th style="padding:0.75pt;border-width:1pt;border-style:solid solid solid none;border-color:#CCCCCC;">
+                    <div style="text-align:center;margin:0;" align="center">
+                        <b>Missing Regions</b>
+                    </div>
+                </th>
+            </tr>
+            {{#unplanned}}
+                <tr>
+                    <td style="border: 1px solid #ccc; width: 19em">
+                        <a href="https://web.recon.region-services.aws.a2z.com/services/{{name_rip}}">{{name_pretty}}</a>
+                    </td>
+                    <td style="border: 1px solid #ccc;">
+                        {{#has_notes}}
+                            <table style="font: 11pt Calbri, sans-serif; border: 0px; border-collapse: collapse; width: 100%">
+                                <tr style="border: 0px">
+                                    <th style="border: 1px solid #ccc;">Region</th>
+                                    <th style="border: 1px solid #ccc;">Note</th>
+                                    <th style="border: 1px solid #ccc;">Changed</th>
+                                    <th style="border: 1px solid #ccc;">By</th>
+                                </tr>
+                                {{#regions}}
+                                    <tr style="border: 0px">
+                                        <td style="border: 1px solid #ccc; width: 5em">
+                                            <a href="https://web.recon.region-services.aws.a2z.com/regions/{{region}}/{{name_rip}}">{{region}}</a>
+                                        </td>
+                                        <td style="border: 1px solid #ccc;">{{note}}</td>
+                                        <td style="border: 1px solid #ccc; width: 8em">
+                                            {{#updated}} {{updated}} {{/updated}}
+                                            {{^updated}} Never {{/updated}}
+                                        </td>
+                                        <td style="border: 1px solid #ccc; width: 7em">
+                                            {{#updater}} <a href="https://phonetool.amazon.com/users/{{updater}}">{{updater}}</a> {{/updater}}
+                                            {{^updater}} No One {{/updater}}
+                                        </td>
+                                    </tr>
+                                {{/regions}}
+                            </table>
+                        {{/has_notes}}
+
+                        {{^has_notes}}
+                            {{#regions}}<a href="https://web.recon.region-services.aws.a2z.com/regions/{{region}}/{{name_rip}}">{{region}}</a>{{separator}}&nbsp;{{/regions}}
+                        {{/has_notes}}
+                    </td>
+                </tr>
+            {{/unplanned}}
+        </tbody>
+    </table>
+
+
+    <div style="margin-top:14pt;margin-bottom:14pt;">
+        <span style="font-size:9pt;">Last successfully sent on {{last_sent_date}}.</span>
+    </div>
+
+    <div style="margin-top:14pt;margin-bottom:14pt;">
+        <span style="font-size:9pt;">
+            For questions about this message,
+            <a href="https://w.amazon.com/bin/view/AWSRegionBuildEngineering/Recon/FAQ" target="_blank">see our documentation</a>.
+            If you notice a problem with this message,
+            <a href="https://issues.amazon.com/issues/create?template=93b36c90-e6b1-4794-8fad-0fe30fe2c5ee" target="_blank">please file a ticket with us</a>.
+        </span>
+    </div>
+
+    <div style="text-align:center;margin:14pt 0;" align="center">
+        <font size="4" face="Calibri,sans-serif">
+            <span style="font-size:13.5pt;">
+                <b><font color="red">AMAZON CONFIDENTIAL</font></b>
+            </span>
+        </font>
+    </div>
+</body>

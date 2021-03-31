@@ -1,0 +1,90 @@
+# -*-perl-*-
+
+package.RegionsReconPythonLambda = {
+    interfaces = (1.0);
+
+    deploy = {
+        generic = true;
+    };
+
+    build-environment = {
+        chroot = basic;
+        network-access = blocked;
+    };
+
+    build-system = cfn-build-and-brazilpython;
+    build-tools = {
+        1.0 = {
+            CfnBuild = 1.0;
+            SAMToolkit = 1.0;
+            BrazilPython = 3.0;
+        };
+    };
+
+    # Use runtime-dependencies for when you want to bring in additional
+    # packages when deploying.
+    # Use dependencies instead if you intend for these dependencies to
+    # be exported to other packages that build against you.
+    dependencies = {
+        1.0 = {
+            Boto3 = 1.x;
+            BenderLibCore = 3.0; # for @exponential_backoff()
+            RegionsReconPythonCommon = 1.0;
+            Python-simplejson = 3.x;
+            Python-dateutil = 2.x;
+            Python-dataclasses = 0.x;
+            PynamoDB = 5.x;
+            Pydash = 3.4.x;
+            BONESHydraTemplate = 1.2;
+
+            Python-dateparser = 0.x;
+            Python-tzlocal = 1.x;
+
+            Python-ipython = 5.3.x;
+            Python-aws-requests-auth = 0.x; # used to curl rms apis
+            BATSComponentLocatorLambda = 1.0;
+            
+            Python-networkx = 2.x;
+
+            # Helper Packages to query RIP data
+            RIPPythonHelperLocal = 2.0;
+            RIPDataAllSQLite = 1.0;
+        };
+    };
+
+    test-dependencies = {
+        1.0 = {
+            # Run tests with py.test in BrazilPython
+            BrazilPython-Pytest = 5.x;
+
+            # Coverage for Python tests.
+            Python-Pytest-cov = 2.x;
+            Python-cov-core = 1.15.x;
+            Coverage = 4.x;
+
+            # Publish test results to Brazil's test and coverage detection
+            BrazilPythonTestSupport = 3.0;
+            Python-ipython = 5.3.x;
+            Python-moto = 1.x;
+            Python-freezegun = 0.x;
+            Python-mockito = 1.1.x;
+
+            Python-networkx = 2.x;
+
+            # Helper Packages to query RIP data
+            RIPPythonHelperLocal = 2.0;
+            RIPDataAllSQLite = 1.0;
+        };
+    };
+
+     targets = {
+        # see setup.py for the actual build logic
+        # keep this line for brazil-path to work
+        python = { type = python; };
+     };
+
+    runtime-dependencies = {
+        1.0 = {
+        };
+    };
+};

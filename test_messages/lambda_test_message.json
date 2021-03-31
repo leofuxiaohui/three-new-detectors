@@ -1,0 +1,15 @@
+{
+    "Records": [
+        {
+            "eventSource": "addilksFingerTips",
+            "body": {
+                "MessageAttributes": {
+                    "changeType": {
+                        "Value": "ServiceStatusChange" // modify this - not sure of side effects
+                    }
+                },
+                "Message": {} // then you put one of the other test messages here
+            }
+        }
+    ]
+}

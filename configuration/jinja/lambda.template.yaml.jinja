@@ -1,0 +1,328 @@
+{% for lambda_config in lambda_configs %}
+  {{ lambda_config.Name }}:
+    Type: AWS::Serverless::Function
+    {% if lambda_config.DependsOn is defined %}
+    DependsOn:
+    {% for depends_on in lambda_config.DependsOn %}
+      - {{ depends_on }}
+    {% endfor %}
+    {% endif %}
+    {% if lambda_config.Condition is defined %}
+    Condition: {{ lambda_config.Condition }}
+    {% endif %}
+    Properties:
+      FunctionName: {{ lambda_config.FunctionName }}
+      Handler: {{ lambda_config.Handler }}
+      Runtime: python3.6
+      CodeUri:
+        Bucket: {'Fn::If' : ['UseBatsKey', 'BATS::SAM::CodeS3Bucket', {"Fn::ImportValue" : {Ref: 'DeploymentBucketImportName'}}]}
+        Key: BATS::SAM::CodeS3Key
+      Role: !GetAtt {{ lambda_config.Name }}ExecutionRole.Arn
+      Description: {{ lambda_config.Description }}
+      {% if lambda_config.EnvironmentVariables is defined %}
+      Environment:
+        Variables:
+          {% for envVar in lambda_config.EnvironmentVariables %}
+          "{{ envVar.Key }}": {{ envVar.Value }}
+          {% endfor %}
+      {% endif %}
+      {% if lambda_config.EventInvokeConfig is defined %}
+      EventInvokeConfig:
+        MaximumRetryAttempts: {{ lambda_config.EventInvokeConfig.MaximumRetryAttempts }}
+      {% endif %}
+      Timeout: {{ lambda_config.Timeout }}
+      MemorySize: {{ lambda_config.MemorySize }}
+      {% if lambda_config.ReservedConcurrentExecutions is defined %}
+      ReservedConcurrentExecutions: {{ lambda_config.ReservedConcurrentExecutions }}
+      {% endif %}
+      Tracing: Active
+
+  # (Dynamo|SQS|Kinesis)-Lambda-Trigger
+  {% if lambda_config.EventSourceArn is defined %}
+  {{ lambda_config.Name }}EventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    {% if lambda_config.Condition is defined %}
+    Condition: {{ lambda_config.Condition }}
+    {% endif %}
+    Properties:
+      Enabled: 'True'
+      BatchSize: {{ lambda_config.BatchSize }}
+      EventSourceArn: {{ lambda_config.EventSourceArn }}
+      {% if lambda_config.StartingPosition is defined %}
+      StartingPosition: {{ lambda_config.StartingPosition }}
+      {% endif %}
+      FunctionName: !GetAtt {{ lambda_config.Name }}.Arn
+  {% endif %}
+
+  # IAM role
+  {{ lambda_config.Name }}ExecutionRole:
+    Type: AWS::IAM::Role
+    {% if lambda_config.Condition is defined %}
+    Condition: {{ lambda_config.Condition }}
+    {% endif %}
+    Properties:
+      RoleName: {{lambda_config.Name}}IAMRole
+      {% if lambda_config.ManagedPolicyArns is defined %}
+      ManagedPolicyArns:
+        {% for managed_policy_arn in lambda_config.ManagedPolicyArns %}
+        - {{ managed_policy_arn }}
+        {% endfor %}
+      {% endif %}
+
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+
+      {% if lambda_config.RolePolicies is defined %}
+      Policies:
+        {% for role_policy in lambda_config.RolePolicies %}
+        - {{ role_policy }}
+        {% endfor %}
+        - PolicyName: {{ lambda_config.Name }}PutMetricDataAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: "*"
+      {% endif %}
+
+  # cloudwatch event to invoke the lambda
+  {% if lambda_config.ScheduleExpression is defined %}
+  {{ lambda_config.Name }}ScheduledRule:
+    Type: AWS::Events::Rule
+    {% if lambda_config.Condition is defined %}
+    Condition: {{ lambda_config.Condition }}
+    {% endif %}
+    Properties:
+      Description: "cronjob to invoke invoke {{ lambda_config.Name }}"
+      Name: {{ lambda_config.Name }}ScheduledRule
+      ScheduleExpression: {{ lambda_config.ScheduleExpression }}
+      State: "ENABLED"
+      Targets:
+        - Arn: !GetAtt {{ lambda_config.Name }}.Arn
+          Id: "{{ lambda_config.Name }}V1"
+
+  PermissionForEventsToInvoke{{ lambda_config.Name }}:
+    Type: AWS::Lambda::Permission
+    {% if lambda_config.Condition is defined %}
+    Condition: {{ lambda_config.Condition }}
+    {% endif %}
+    Properties:
+      FunctionName: {{ lambda_config.FunctionName }}
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt {{ lambda_config.Name }}ScheduledRule.Arn
+  {% endif %}  # end cloudwatch event
+
+  # alarms
+  {% if lambda_config.Alarms is defined %}
+  {% for alarm_dict in lambda_config.Alarms %}
+  {{ lambda_config.Name }}{{ alarm_dict.MetricName }}{{ alarm_dict.ComparisonOperator }}Alarm:
+    Type: "AWS::CloudWatch::Alarm"
+    {% if lambda_config.Condition is defined %}
+    Condition: {{ lambda_config.Condition }}
+    {% endif %}
+    Properties:
+      AlarmName: {{ lambda_config.Name }}{{ alarm_dict.MetricName }}{{ alarm_dict.ComparisonOperator }}
+      AlarmDescription: {{ alarm_dict.MetricName }} {{ alarm_dict.ComparisonOperator }}
+      ComparisonOperator: {{ alarm_dict.ComparisonOperator }}
+      Threshold: {{ alarm_dict.Threshold }}
+      EvaluationPeriods: {{ alarm_dict.EvaluationPeriods }}
+      MetricName: {{ alarm_dict.MetricName }}
+      Namespace: "AWS/Lambda"
+      Period: {{ alarm_dict.Period }}
+      Statistic: {{ alarm_dict.Statistic }}
+      TreatMissingData: {{ alarm_dict.TreatMissingData }}
+      {% if alarm_dict.DatapointsToAlarm is defined %}
+      DatapointsToAlarm: {{ alarm_dict.DatapointsToAlarm }}
+      {% endif %}
+      Dimensions:
+      - Name: FunctionName
+        Value: {{ lambda_config.FunctionName }}
+  {% endfor %}
+  {% endif %}  # end alarms
+
+  # Log Group
+  # We should start declaring Log Groups during CloudFormation time instead of lambda execution time
+  {% if lambda_config.LogGroup is defined %}
+  {{ lambda_config.FunctionName }}LogGroup:
+    Type: "AWS::Logs::LogGroup"
+    {% if lambda_config.Condition is defined %}
+    Condition: {{ lambda_config.Condition }}
+    {% endif %}
+    Properties:
+      LogGroupName: "/aws/lambda/{{ lambda_config.FunctionName }}"
+      RetentionInDays: 3653
+  {% endif %}  # end LogGroup
+
+
+  # Metric Filters
+  {% if lambda_config.MetricFilters is defined %}
+  {% for metric_filter in lambda_config.MetricFilters %}
+  {% if lambda_config.FunctionName == "IngestRipChanges" %}
+  {{ lambda_config.FunctionName }}{{ ingest_rip_changes_rename_metrics[metric_filter] }}MetricFilter:
+  {% elif lambda_config.FunctionName == "RMSDatesScheduledJobFunction" %}
+  {{ lambda_config.FunctionName }}{{ rms_dates_scheduled_job_rename_metrics[metric_filter] }}MetricFilter:
+  {% else %}
+  {{ lambda_config.FunctionName }}{{ metric_filter }}MetricFilter:
+  {% endif %}
+    Type: "AWS::Logs::MetricFilter"
+    {% if lambda_config.Condition is defined %}
+    Condition: {{ lambda_config.Condition }}
+    {% endif %}
+    DependsOn: {{ lambda_config.FunctionName }}LogGroup
+    Properties:
+      FilterPattern: "{ ($.log_type = \"METRIC\") && ($.service_name = \"{{ lambda_config.FunctionName }}\") && ($.metric_name = \"{{ metric_filter }}\") && ($.metric_value = \"*\") }"
+      LogGroupName: "/aws/lambda/{{ lambda_config.FunctionName }}"
+      MetricTransformations:
+        - MetricValue: $.metric_value
+          MetricNamespace: Recon/{{ lambda_config.FunctionName }}
+          MetricName: {{ metric_filter }}
+  {% endfor %}
+  {% endif %}  # end Metric Filters
+
+  # Dashboard
+  {{ lambda_config.Name }}Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    {% if lambda_config.Condition is defined %}
+    Condition: {{ lambda_config.Condition }}
+    {% endif %}
+    Properties:
+      DashboardName: Lambda-{{ lambda_config.FunctionName }}
+      DashboardBody:
+        Fn::Sub: '{% filter fromyaml_tojson -%}
+          widgets:
+            - type: "metric"
+              x: 0
+              y: 0
+              width: 12
+              height: 6
+              properties:
+                view: "timeSeries"
+                stacked: false
+                region: "${AWS::Region}"
+                metrics:
+                  -
+                    - "AWS/Lambda"
+                    - "Invocations"
+                    - "FunctionName"
+                    - "{{ lambda_config.FunctionName }}"
+                    - { "stat": "Sum" }
+
+            - type: "metric"
+              x: 12
+              y: 0
+              width: 12
+              height: 6
+              properties:
+                view: "timeSeries"
+                stacked: false
+                region: "${AWS::Region}"
+                metrics:
+                  -
+                    - "AWS/Lambda"
+                    - "Errors"
+                    - "FunctionName"
+                    - "{{ lambda_config.FunctionName }}"
+                    - { "stat": "Sum" }
+
+            - type: "metric"
+              x: 0
+              y: 6
+              width: 12
+              height: 6
+              properties:
+                view: "timeSeries"
+                stacked: false
+                region: "${AWS::Region}"
+                metrics:
+                  -
+                    - "AWS/Lambda"
+                    - "Throttles"
+                    - "FunctionName"
+                    - "{{ lambda_config.FunctionName }}"
+                    - { "stat": "Sum" }
+
+            - type: "metric"
+              x: 12
+              y: 6
+              width: 12
+              height: 6
+              properties:
+                view: "timeSeries"
+                stacked: false
+                region: "${AWS::Region}"
+                metrics:
+                  -
+                    - "AWS/Lambda"
+                    - "Duration"
+                    - "FunctionName"
+                    - "{{ lambda_config.FunctionName }}"
+                    - { "stat": "Maximum" }
+                  -
+                    - "..."
+                    - { "stat": "Minimum" }
+                  -
+                    - "..."
+
+            - type: "metric"
+              x: 0
+              y: 12
+              width: 12
+              height: 6
+              properties:
+                view: "timeSeries"
+                stacked: false
+                region: "${AWS::Region}"
+                metrics:
+                  -
+                    - "AWS/Lambda"
+                    - "IteratorAge"
+                    - "FunctionName"
+                    - "{{ lambda_config.FunctionName }}"
+                    - { "stat": "Maximum" }
+
+            - type: "metric"
+              x: 12
+              y: 12
+              width: 12
+              height: 6
+              properties:
+                view: "timeSeries"
+                stacked: false
+                region: "${AWS::Region}"
+                metrics:
+                  -
+                    - "AWS/Lambda"
+                    - "ConcurrentExecutions"
+                    - "FunctionName"
+                    - "{{ lambda_config.FunctionName }}"
+                    - { "stat": "Maximum" }
+
+            - type: "metric"
+              x: 0
+              y: 18
+              width: 12
+              height: 6
+              properties:
+                view: "timeSeries"
+                stacked: false
+                region: "${AWS::Region}"
+                metrics:
+                  -
+                    - "AWS/Lambda"
+                    - "DeadLetterErrors"
+                    - "FunctionName"
+                    - "{{ lambda_config.FunctionName }}"
+                    - { "stat": "Maximum" }
+        {% endfilter -%}'
+
+{% endfor %}

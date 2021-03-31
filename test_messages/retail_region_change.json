@@ -1,0 +1,21 @@
+{
+    "dimension": {
+        "name": "KAT",
+        "type": "REGION"
+    },
+    "registerDate": 1604441499986,
+    "newValue": {
+        "description": null
+    },
+    "status": "APPROVED",
+    "dimensionCompositeKey": "REGION:KAT",
+    "newEntry": false,
+    "approvedHashKey": "APPROVED-1",
+    "registrant": "aws:768227362449",
+    "id": "8aebf472-0420-47b5-a876-c099959ce0b7",
+    "previousValue": {
+        "description": "Test description1604441498951"
+    },
+    "approvedDate": 1604441500201,
+    "approver": "aws:768227362449"
+}

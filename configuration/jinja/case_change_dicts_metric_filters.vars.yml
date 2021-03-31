@@ -1,0 +1,20 @@
+ingest_rip_changes_rename_metrics:
+
+  change_not_approved: "ChangeNotApproved"
+  unknown_dimension_type: "UnknownDimensionType"
+  service_change: "ServiceChange"
+  region_change: "RegionChange"
+  ignored_change_type: "IgnoredChangeType"
+  records_processed: "RecordsProcessed"
+  lambda_not_invoked_by_sqs_or_tests: "LambdaNotInvokedBySqsOrTests"
+  integ_or_canary_execution: "IntegOrCanaryExecution"
+  ddb_items_written: "DdbItemsWritten"
+  ddb_item_not_found: "DdbItemNotFound"
+  ddb_item_not_updated: "DdbItemNotUpdated"
+
+rms_dates_scheduled_job_rename_metrics:
+
+  ddb_item_already_uptodate: "DdbItemAlreadyUptodate"
+  ddb_updated_item: "DdbUpdatedItem"
+  no_ga_milestone_found: "NoGaMilestoneFound"
+  rms_response_invalid: "RmsResponseInvalid"

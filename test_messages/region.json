@@ -1,0 +1,35 @@
+{
+    "id": "26a27473-f317-4315-86e4-41d3d60445dc",
+    "newEntry": false,
+    "dimension": {
+        "name": "BPM",
+        "type": "REGION"
+    },
+    "status": "APPROVED",
+    "registrant": "region-build-automation",
+    "registerDate": 1576125622146,
+    "approver": "region-build-automation",
+    "approvedDate": 1576125622281,
+    "newValue": {
+        "@class": "com.amazon.services.rip.models.Region",
+        "key": {
+            "name": "BPM",
+            "type": "REGION"
+        },
+        "accessibilityAttributes": [
+            "SNOWFORTED",
+            "NO_GLOBAL_CREDS"
+        ]
+    },
+    "previousValue": {
+        "@class": "com.amazon.services.rip.models.Region",
+        "key": {
+            "name": "BPM",
+            "type": "REGION"
+        },
+        "accessibilityAttributes": [
+            "SNOWFORTED",
+            "RETAIL"
+        ]
+    }
+}

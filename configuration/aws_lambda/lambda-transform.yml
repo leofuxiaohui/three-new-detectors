@@ -1,0 +1,7 @@
+archive_system: archive_python
+python_version: "3.6"
+handler_path: aws_lambda/handlers.py
+# You can send along some additional files by uncommenting/updating the lines below.  
+# See: https://w.amazon.com/index.php/BuilderTools/PackagingTeam/Products/BATS/Transformers/Lambda#Adding_arbitrary_data_files
+# data_files:
+#  - var/lib/some/random/files

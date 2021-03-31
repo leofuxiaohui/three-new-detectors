@@ -1,0 +1,27 @@
+{
+    "id": "31126111-9300-493e-a972-bb561962ae1f",
+    "newEntry": false,
+    "dimension": {
+        "name": "rms-canary-service",
+        "type": "SERVICE"
+    },
+    "status": "PENDING",
+    "registrant": "rms-canary",
+    "registerDate": 1572884680110,
+    "newValue": {
+        "@class": "com.amazon.services.rip.models.ServiceMetadata",
+        "key": {
+            "name": "rms-canary-service",
+            "type": "SERVICE"
+        },
+        "description": "This description was updated by the canary on 1572884680090"
+    },
+    "previousValue": {
+        "@class": "com.amazon.services.rip.models.ServiceMetadata",
+        "key": {
+            "name": "rms-canary-service",
+            "type": "SERVICE"
+        },
+        "description": "This description was updated by the canary on 1572884520161"
+    }
+}

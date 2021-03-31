@@ -1,0 +1,52 @@
+Resources:
+  ComponentLocation:
+    Condition: HasCanary
+    DependsOn: BATSComponentLocatorLambda
+    Type: Custom::BATSComponentLocation
+    Properties:
+      ServiceToken: !GetAtt BATSComponentLocatorLambda.Arn
+      CodeS3Bucket:
+        Fn::ImportValue: !Ref DeploymentBucketImportName
+      CodeS3Key: BATS::SAM::CodeS3Key
+      ComponentName: HydraCanaryPackage
+  HydraCanary:
+    Condition: HasCanary
+    DependsOn:
+      - ComponentLocation
+      - HydraCanaryPersistentConfiguration
+    Type: AWS::CodeTest::Series
+    Properties:
+      PersistentConfigurationId: !Ref HydraCanaryPersistentConfiguration
+      State: ENABLED
+      RunDefinition: 
+        Fn::Sub:
+          - |- 
+            {
+              "SchemaVersion": "1.0",
+              "SchemaType": "HydraCustom",
+              "HydraParameters": {
+                "Runtime": "python3.6",
+                "Handler": "index.handler", 
+                "MemorySize": 1536,
+                "Timeout": 600,
+                "TestVertical": "CANARY",
+                "TestPackageName": "RegionsReconPythonLambdaHydraTests-1.0",
+                "ComputeEngine": "Lambda",
+                "CodeLocation": "${ComponentLocation.CodeS3Uri}",
+                "InvocationRoleArn": "${HydraTestInvocationRole.Arn}",
+                "Series": [{
+                  "Rate": "1/PT10M"
+                }]
+              },
+              "EnvironmentVariables": {
+                "HYDRA_TARGET_HOSTNAME": "api.recon${StageEndpointPart}.region-services.aws.a2z.com"
+              },
+              "HandlerParameters": {
+                "PythonTestPackage": "regions_recon_python_lambda_hydra_tests"
+              }
+            }
+          - StageEndpointPart:
+              Fn::If: 
+                - IsProdStage
+                - ""
+                - {Fn::Sub: "-${Stage}"}

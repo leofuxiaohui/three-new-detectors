@@ -1,0 +1,122 @@
+{
+    "approvedDate": 1564454017014,
+    "approvedHashKey": "APPROVED-1",
+    "approver": "system",
+    "dimension": {
+        "name": "BAH",
+        "type": "WHATEVER"
+    },
+    "dimensionCompositeKey": "REGION:BAH",
+    "id": "5811067a-c8f8-44aa-a95c-2bc994c6d6aa",
+    "newEntry": false,
+    "newValue": {
+        "@class": "com.amazon.services.rip.models.Region",
+        "accessibilityAttributes": [
+            "SNOWFORTED",
+            "PUBLICLY_ANNOUNCED",
+            "NO_GLOBAL_CREDS"
+        ],
+        "arnPartition": "aws",
+        "backendVipZone": "bah.amazon.com",
+        "billingPrefix": "MES1",
+        "bvpcLocation": "BOM",
+        "codeName": "Sandstorm",
+        "domain": "amazonaws.com",
+        "estimatedLaunchDate": 1564358400000,
+        "geolocationData": {
+            "city": "Bahrain",
+            "region": "BH",
+            "regionCode": "BH-14"
+        },
+        "infraFrontendVipZone": "bah.aws-border.com",
+        "key": {
+            "name": "BAH",
+            "type": "WHATEVER"
+        },
+        "longName": "Middle East (Bahrain)",
+        "prodHostTypes": [],
+        "publicDnsSuffix": "me-south-1.amazonaws.com",
+        "regionName": "me-south-1",
+        "standardFrontendVipZone": "me-south-1.amazonaws.com",
+        "status": "GA",
+        "statusDates": {
+            "BUILD": 1525811708000,
+            "GA": 1564409212000
+        },
+        "substrateDnsSuffix": "bah.ec2.substrate",
+        "tags": [
+            {
+                "key": "retailRegion",
+                "value": "false"
+            },
+            {
+                "key": "publicRegion",
+                "value": "true"
+            },
+            {
+                "key": "testRegion",
+                "value": "false"
+            }
+        ],
+        "timezoneId": "Asia/Bahrain",
+        "usageTypePrefix": "MES1",
+        "vpcDnsDomainSuffix": "bah00.amazon.com",
+        "websiteDomain": "aws.amazon.com"
+    },
+    "previousValue": {
+        "@class": "com.amazon.services.rip.models.Region",
+        "accessibilityAttributes": [
+            "SNOWFORTED",
+            "PUBLICLY_ANNOUNCED",
+            "NO_GLOBAL_CREDS"
+        ],
+        "arnPartition": "aws",
+        "backendVipZone": "bah.amazon.com",
+        "billingPrefix": "MES1",
+        "bvpcLocation": "BOM",
+        "codeName": "Sandstorm",
+        "domain": "amazonaws.com",
+        "estimatedLaunchDate": 1564358400000,
+        "geolocationData": {
+            "city": "Bahrain",
+            "region": "BH",
+            "regionCode": "BH-14"
+        },
+        "infraFrontendVipZone": "bah.aws-border.com",
+        "key": {
+            "name": "BAH",
+            "type": "REGION"
+        },
+        "longName": "Middle East (Bahrain)",
+        "prodHostTypes": [],
+        "publicDnsSuffix": "me-south-1.amazonaws.com",
+        "regionName": "me-south-1",
+        "standardFrontendVipZone": "me-south-1.amazonaws.com",
+        "status": "BUILD",
+        "statusDates": {
+            "BUILD": 1525811708000
+        },
+        "substrateDnsSuffix": "bah.ec2.substrate",
+        "tags": [
+            {
+                "key": "retailRegion",
+                "value": "false"
+            },
+            {
+                "key": "publicRegion",
+                "value": "true"
+            },
+            {
+                "key": "testRegion",
+                "value": "false"
+            }
+        ],
+        "timezoneId": "Asia/Bahrain",
+        "usageTypePrefix": "MES1",
+        "vpcDnsDomainSuffix": "bah00.amazon.com",
+        "websiteDomain": "aws.amazon.com"
+    },
+    "registerDate": 1564454016967,
+    "registrant": "system",
+    "status": "APPROVED"
+}
