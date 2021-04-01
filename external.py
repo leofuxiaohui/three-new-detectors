@@ -1,8 +1,5 @@
 import ssl
 import socket
-import threading
-
-
 def get_issuer_for_endpoint(url, port,issuers):
     s = socket.socket()
     s.settimeout(TIMEOUT)
